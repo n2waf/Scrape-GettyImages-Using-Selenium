@@ -2,6 +2,13 @@ from selenium import webdriver
 import urllib.request
 import time
 import os
+from tkinter import filedialog
+
+namesFilePath = 'C:/Users/NF/Documents/project1/Scrape-GettyImages-Using-Selenium/names.txt'
+gettyURL = 'https://www.gettyimages.ae/photos/first-last?family=editorial&phrase=first%20last&sort=mostpopular#license'
+newImagesPath = 'C:/Users/NF/Documents/project1/Scrape-GettyImages-Using-Selenium/images'
+pages = 5
+list_of_names = []
 
 
 def download_image(person_name, src, seq, dir):
@@ -13,8 +20,38 @@ def download_image(person_name, src, seq, dir):
     except Exception:
         pass
 
+def getNames():
+  with open(namesFilePath) as f:
+    for line in f:
+        inner_list = [elt.strip() for elt in line.split(',')]
+        for i in inner_list: 
+          list_of_names.append(i)
 
-def browse_page(person_name, pages, dir):
+        
+def getURL(name):
+  if len(name.split()) > 1: 
+     first = name.split()[0]
+     last = name.split()[1]
+     url = gettyURL.replace('first',first).replace('last',last)
+     return url
+  else: 
+    first = name.split()[0]
+    url = gettyURL.replace('first',first).replace('last','').replace('%20','').replace('-?','?')
+    return url
+
+def create_folder(name):
+  if newImagesPath == '': 
+    folderPath = filedialog.askdirectory()
+    folderPath = os.path.join(folderPath,name)
+  else: 
+    folderPath = os.path.join(newImagesPath,name)
+  if not os.path.isdir(folderPath): # If the folder does not exist in working directory, create a new one.
+        os.makedirs(folderPath)
+  return folderPath
+  
+
+
+def browse_page(person_name, pages,driver, dir):
     seq = 0 #initialize the file number. 
     for i in range(pages): # Loop for the number of pages you want to scrape.
         try:
@@ -36,18 +73,18 @@ def browse_page(person_name, pages, dir):
         except:
           pass
         time.sleep(2)
-  #test 
-if __name__ == '__main__':
-    person_name = input("Please Provide The Person's Name: \n") 
-    url = input('Please Provide The Page URL: \n')
-    dir = input('Please Provide The Directory Where The Data Will be Saved: \n')
-    pages = int(input('Please Provide How Many Pages You Want To Be Scrapped: \n'))
-    driver = webdriver.Firefox()
-    # driver = webdriver.Chrome() # IF YOU ARE USING CHROME.	
-    driver.maximize_window()
-    driver.get(url)
-    if not os.path.isdir(dir): # If the folder does not exist in working directory, create a new one.
-        os.makedirs(dir)
-    browse_page(person_name, pages, dir)
+ 
 
-			
+def getImages():
+    getNames()
+    driver.maximize_window()
+    for i in list_of_names: 
+      driver.get(getURL(i))
+      dirc = create_folder(i)
+      browse_page(i, pages,driver, dirc)
+
+
+	
+driver = webdriver.Chrome('C:/Users/NF/chromedriver.exe') # IF YOU ARE USING CHROME.
+#driver = webdriver.Firefox() # IF YOU ARE USING Firfox.
+getImages()
